@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水果合成游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 25px 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .fruit-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 180px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .main-fruit {
+            font-size: 100px;
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .synthesis-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .particles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 30px;
+            animation: particle-fly 0.8s ease-out forwards;
+        }
+
+        @keyframes particle-fly {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .glow-ring {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 4px solid gold;
+            animation: ring-expand 0.8s ease-out forwards;
+        }
+
+        @keyframes ring-expand {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .star-burst {
+            position: absolute;
+            font-size: 50px;
+            animation: star-spin 0.8s ease-out forwards;
+        }
+
+        @keyframes star-spin {
+            0% {
+                transform: rotate(0deg) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(360deg) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .spark {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: gold;
+            border-radius: 50%;
+            box-shadow: 0 0 10px gold, 0 0 20px orange;
+            animation: spark-fly 0.6s ease-out forwards;
+        }
+
+        @keyframes spark-fly {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--sx), var(--sy)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .new-fruit-animation {
+            animation: new-fruit-appear 0.6s ease-out forwards;
+        }
+
+        @keyframes new-fruit-appear {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.3) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-text {
+            color: #666;
+            margin-top: 10px;
+            font-size: 0.95em;
+        }
+
+        .merge-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            margin-top: 20px;
+        }
+
+        .merge-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .merge-btn:active {
+            transform: translateY(0);
+        }
+
+        .merge-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .level-complete-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .level-complete-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 25px;
+            text-align: center;
+            animation: modal-pop 0.5s ease;
+            max-width: 90vw;
+        }
+
+        @keyframes modal-pop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: celebrate 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1) rotate(-5deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px 15px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .main-fruit {
+                font-size: 80px;
+            }
+
+            .level-info {
+                padding: 6px 15px;
+                font-size: 1em;
+            }
+
+            .merge-btn {
+                padding: 12px 40px;
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</div>
+
+    <div class="game-container">
+        <h1>🍇 水果合成大冒险 🍉</h1>
+        <div class="level-info" id="levelInfo">等级 1 / 10</div>
+        <div class="fruit-display">
+            <div class="main-fruit" id="mainFruit">🍇</div>
+            <div class="synthesis-effect" id="synthesisEffect"></div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+        </div>
+        <div class="progress-text" id="progressText">还需要 9 次合成</div>
+        <button class="merge-btn" id="mergeBtn" onclick="mergeFruits()">合成</button>
+    </div>
+
+    <div class="level-complete-modal" id="levelCompleteModal">
+        <div class="modal-content">
+            <div class="modal-emoji">🎉</div>
+            <div class="modal-title">恭喜通关！</div>
+            <div class="modal-buttons">
+                <button class="merge-btn" onclick="restartGame()">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 水果等级库
+        const FRUITS = [
+            { emoji: '🍇', name: '葡萄', level: 1 },
+            { emoji: '🍊', name: '橘子', level: 2 },
+            { emoji: '🍋', name: '柠檬', level: 3 },
+            { emoji: '🍎', name: '苹果', level: 4 },
+            { emoji: '🍓', name: '草莓', level: 5 },
+            { emoji: '🍑', name: '桃子', level: 6 },
+            { emoji: '🥭', name: '桃子', level: 7 },
+            { emoji: '🍍', name: '香蕉', level: 8 },
+            { emoji: '🥝', name: '猕猴桃', level: 9 },
+            { emoji: '🍉', name: '西瓜', level: 10 }
+        ];
+
+        const TOTAL_LEVELS = FRUITS.length;
+        const TARGET_MERGES = TOTAL_LEVELS - 1;
+
+        let currentLevel = 1;
+        let mergeCount = 0;
+        let isProcessing = false;
+        let soundEnabled = true;
+        let audioContext = null;
+
+        // 初始化音频上下文
+        function initAudio() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('AudioContext not supported');
+                    soundEnabled = false;
+                }
+            }
+            if (audioContext && audioContext.state === 'suspended') {
+                try {
+                    audioContext.resume();
+                } catch (e) {
+                    console.log('Failed to resume AudioContext');
+                }
+            }
+        }
+
+        // 播放合成音效
+        function playMergeSound(level) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+
+                const now = audioContext.currentTime;
+
+                // 根据等级播放不同的音效
+                const baseFreq = 200 + (level * 100);
+
+                // 播放合成主音
+                const oscillator1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
+                oscillator1.connect(gain1);
+                gain1.connect(audioContext.destination);
+                oscillator1.type = 'sine';
+                oscillator1.frequency.setValueAtTime(baseFreq, now);
+                oscillator1.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.2);
+                gain1.gain.setValueAtTime(0.4, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                oscillator1.start(now);
+                oscillator1.stop(now + 0.4);
+
+                // 添加和声
+                for (let i = 1; i <= 3; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.type = 'sine';
+                    const harmonicFreq = baseFreq * (1 + i * 0.5);
+                    osc.frequency.setValueAtTime(harmonicFreq, now + 0.05 * i);
+                    gain.gain.setValueAtTime(0.2 / i, now + 0.05 * i);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05 * i + 0.3);
+                    osc.start(now + 0.05 * i);
+                    osc.stop(now + 0.05 * i + 0.3);
+                }
+
+                // 高等级添加更多特效音
+                if (level >= 7) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(baseFreq * 0.5, now + 0.1);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.25, now + 0.3);
+                    gain.gain.setValueAtTime(0.15, now + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now + 0.1);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+
+        // 播放胜利音效
+        function playVictorySound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioContext.currentTime;
+
+                const melody = [523, 659, 784, 880, 1047];
+                melody.forEach((freq, i) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.2);
+                    gain.gain.setValueAtTime(0.3, now + i * 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.2 + 0.3);
+                    osc.start(now + i * 0.2);
+                    osc.stop(now + i * 0.2 + 0.3);
+                });
+
+                // 添加和弦
+                for (let i = 0; i < 3; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(392 + i * 87, now + 0.5);
+                    gain.gain.setValueAtTime(0.2, now + 0.5);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+                    osc.start(now + 0.5);
+                    osc.stop(now + 1.5);
+                }
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+
+        // 切换音效
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // 更新UI
+        function updateUI() {
+            const fruit = FRUITS[currentLevel - 1];
+            const mainFruit = document.getElementById('mainFruit');
+
+            mainFruit.textContent = fruit.emoji;
+            mainFruit.className = 'main-fruit new-fruit-animation';
+
+            setTimeout(() => {
+                mainFruit.classList.remove('new-fruit-animation');
+            }, 600);
+
+            document.getElementById('levelInfo').textContent = `等级 ${currentLevel} / ${TOTAL_LEVELS}`;
+            document.getElementById('progressText').textContent = `还需要 ${TARGET_MERGES - mergeCount} 次合成`;
+
+            const progress = ((mergeCount) / TARGET_MERGES) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+
+            if (currentLevel >= TOTAL_LEVELS) {
+                document.getElementById('mergeBtn').disabled = true;
+                document.getElementById('mergeBtn').textContent = '通关！';
+            }
+        }
+
+        // 创建合成特效
+        function createSynthesisEffect() {
+            const effectContainer = document.getElementById('synthesisEffect');
+            effectContainer.innerHTML = '';
+
+            // 创建光环
+            const ring = document.createElement('div');
+            ring.className = 'glow-ring';
+            effectContainer.appendChild(ring);
+
+            // 创建星星爆炸
+            for (let i = 0; i < 8; i++) {
+                const star = document.createElement('div');
+                star.className = 'star-burst';
+                star.textContent = '✨';
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 100;
+                star.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                star.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                star.style.left = '50%';
+                star.style.top = '50%';
+                star.style.animationDelay = `${i * 0.05}s`;
+                effectContainer.appendChild(star);
+            }
+
+            // 创建火花
+            for (let i = 0; i < 12; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 80 + Math.random() * 40;
+                spark.style.setProperty('--sx', `${Math.cos(angle) * distance}px`);
+                spark.style.setProperty('--sy', `${Math.sin(angle) * distance}px`);
+                spark.style.left = '50%';
+                spark.style.top = '50%';
+                spark.style.animationDelay = `${i * 0.03}s`;
+                effectContainer.appendChild(spark);
+            }
+
+            // 清理特效
+            setTimeout(() => {
+                effectContainer.innerHTML = '';
+            }, 1000);
+        }
+
+        // 合成水果
+        async function mergeFruits() {
+            if (isProcessing || currentLevel >= TOTAL_LEVELS) return;
+
+            isProcessing = true;
+            const btn = document.getElementById('mergeBtn');
+            btn.disabled = true;
+
+            // 播放音效
+            playMergeSound(currentLevel);
+
+            // 创建特效
+            createSynthesisEffect();
+
+            // 等待动画完成
+            await sleep(600);
+
+            // 提升等级
+            mergeCount++;
+            currentLevel++;
+
+            // 更新UI
+            updateUI();
+
+            // 等待一下再允许下次合成
+            await sleep(300);
+
+            btn.disabled = false;
+
+            // 检查是否通关
+            if (currentLevel >= TOTAL_LEVELS) {
+                await sleep(500);
+                showLevelComplete();
+            }
+
+            isProcessing = false;
+        }
+
+        // 显示通关弹窗
+        function showLevelComplete() {
+            const modal = document.getElementById('levelCompleteModal');
+            document.querySelector('.modal-emoji').textContent = FRUITS[TOTAL_LEVELS - 1].emoji;
+            modal.classList.add('show');
+            playVictorySound();
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            currentLevel = 1;
+            mergeCount = 0;
+            isProcessing = false;
+            document.getElementById('levelCompleteModal').classList.remove('show');
+            document.getElementById('mergeBtn').disabled = false;
+            document.getElementById('mergeBtn').textContent = '合成';
+            updateUI();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 初始化游戏
+        updateUI();
+    </script>
+</body>
+</html>
