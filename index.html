@@ -36,6 +36,33 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .level-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .level-stars {
+            font-size: 1.5em;
+            margin-top: 5px;
+        }
+
+        .target-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
         .score-board {
             display: flex;
             justify-content: center;
@@ -164,20 +191,109 @@
             transform: translateY(0);
         }
 
+        button.next-level {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
         .message {
             margin-top: 20px;
             font-size: 1.1em;
             color: #667eea;
             min-height: 30px;
         }
+
+        .level-complete-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .level-complete-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalPop 0.5s ease;
+            max-width: 400px;
+        }
+
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-stars {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .modal-score {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-over-modal.show {
+            display: flex;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>🍎 水果消消乐 🍊</h1>
+        <div class="level-info">
+            第 <span id="currentLevel">1</span> 关
+            <div class="level-stars" id="levelStars">⭐⭐⭐</div>
+        </div>
+        <div class="target-info" id="targetInfo">目标：获得 500 分</div>
         <div class="score-board">
-            <div class="score-item">得分: <span id="score">0</span></div>
-            <div class="score-item">移动: <span id="moves">0</span></div>
+            <div class="score-item">得分: <span id="score">0</span> / <span id="targetScore">500</span></div>
+            <div class="score-item">移动: <span id="moves">0</span> / <span id="maxMoves">20</span></div>
         </div>
         <div class="game-board" id="gameBoard"></div>
         <div class="message" id="message">点击选择水果，交换相邻水果消除！</div>
@@ -187,14 +303,49 @@
         </div>
     </div>
 
+    <!-- 关卡完成弹窗 -->
+    <div class="level-complete-modal" id="levelCompleteModal">
+        <div class="modal-content">
+            <div class="modal-title">🎉 恭喜过关！</div>
+            <div class="modal-stars" id="modalStars">⭐⭐⭐</div>
+            <div class="modal-score" id="modalScore">得分: 500</div>
+            <div class="modal-buttons">
+                <button class="next-level" id="nextLevelBtn" onclick="nextLevel()">下一关</button>
+                <button onclick="resetLevel()">重玩本关</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div class="game-over-modal" id="gameOverModal">
+        <div class="modal-content">
+            <div class="modal-title">😢 游戏结束</div>
+            <div class="modal-score" id="gameOverScore">得分: 300</div>
+            <div class="modal-buttons">
+                <button onclick="resetLevel()">重玩本关</button>
+                <button onclick="restartGame()">重新开始</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const BOARD_SIZE = 8;
         const FRUITS = ['🍎', '🍊', '🍋', '🍇', '🍓', '🥝'];
+
+        // 关卡配置
+        const LEVELS = [
+            { targetScore: 500, maxMoves: 20, name: '初出茅庐' },
+            { targetScore: 800, maxMoves: 25, name: '渐入佳境' },
+            { targetScore: 1200, maxMoves: 30, name: '水果大师' }
+        ];
+
         let board = [];
         let selectedCell = null;
         let score = 0;
         let moves = 0;
+        let currentLevel = 1;
         let isProcessing = false;
+        let levelComplete = false;
 
         function initGame() {
             board = [];
@@ -210,16 +361,15 @@
             }
             renderBoard();
             updateScore();
+            updateLevelInfo();
         }
 
         function wouldMatch(row, col, fruit) {
-            // 检查水平方向
             if (col >= 2 &&
                 board[row][col-1] === fruit &&
                 board[row][col-2] === fruit) {
                 return true;
             }
-            // 检查垂直方向
             if (row >= 2 &&
                 board[row-1][col] === fruit &&
                 board[row-2][col] === fruit) {
@@ -246,7 +396,7 @@
         }
 
         function handleCellClick(row, col) {
-            if (isProcessing) return;
+            if (isProcessing || levelComplete) return;
 
             const cell = getCell(row, col);
 
@@ -284,19 +434,17 @@
             moves++;
             updateScore();
 
-            // 交换水果
             const temp = board[row1][col1];
             board[row1][col1] = board[row2][col2];
             board[row2][col2] = temp;
             renderBoard();
 
-            // 检查是否有匹配
             const matches = findMatches();
 
             if (matches.length > 0) {
                 await processMatches();
+                checkGameStatus();
             } else {
-                // 如果没有匹配，交换回来
                 showMessage('无效移动！');
                 await sleep(500);
                 const temp = board[row1][col1];
@@ -313,7 +461,6 @@
         function findMatches() {
             const matches = new Set();
 
-            // 检查水平方向
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE - 2; j++) {
                     if (board[i][j] && board[i][j] === board[i][j+1] && board[i][j] === board[i][j+2]) {
@@ -324,7 +471,6 @@
                 }
             }
 
-            // 检查垂直方向
             for (let i = 0; i < BOARD_SIZE - 2; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
                     if (board[i][j] && board[i][j] === board[i+1][j] && board[i][j] === board[i+2][j]) {
@@ -345,7 +491,6 @@
             let matches = findMatches();
 
             while (matches.length > 0) {
-                // 显示匹配动画并计算分数
                 matches.forEach(({ row, col }) => {
                     const cell = getCell(row, col);
                     cell.classList.add('matched');
@@ -356,18 +501,13 @@
 
                 await sleep(300);
 
-                // 移除匹配的水果
                 matches.forEach(({ row, col }) => {
                     board[row][col] = '';
                 });
 
-                // 让水果下落
                 await dropFruits();
-
-                // 填充新水果
                 await fillBoard();
 
-                // 检查新的匹配
                 matches = findMatches();
 
                 if (matches.length > 0) {
@@ -439,6 +579,102 @@
             document.getElementById('moves').textContent = moves;
         }
 
+        function updateLevelInfo() {
+            const level = LEVELS[currentLevel - 1];
+            document.getElementById('currentLevel').textContent = currentLevel;
+            document.getElementById('targetInfo').textContent = `目标：获得 ${level.targetScore} 分`;
+            document.getElementById('targetScore').textContent = level.targetScore;
+            document.getElementById('maxMoves').textContent = level.maxMoves;
+
+            // 计算星级
+            const stars = calculateStars();
+            document.getElementById('levelStars').textContent = stars;
+        }
+
+        function calculateStars() {
+            const level = LEVELS[currentLevel - 1];
+            if (score >= level.targetScore * 1.5) {
+                return '⭐⭐⭐';
+            } else if (score >= level.targetScore * 1.2) {
+                return '⭐⭐';
+            } else if (score >= level.targetScore) {
+                return '⭐';
+            }
+            return '';
+        }
+
+        function checkGameStatus() {
+            const level = LEVELS[currentLevel - 1];
+
+            // 检查是否达到目标分数
+            if (score >= level.targetScore && !levelComplete) {
+                levelComplete = true;
+                showLevelComplete();
+            }
+            // 检查是否移动次数用完
+            else if (moves >= level.maxMoves && score < level.targetScore && !levelComplete) {
+                showGameOver();
+            }
+        }
+
+        function showLevelComplete() {
+            const modal = document.getElementById('levelCompleteModal');
+            document.getElementById('modalStars').textContent = calculateStars();
+            document.getElementById('modalScore').textContent = `得分: ${score}`;
+
+            // 如果是最后一关，隐藏下一关按钮
+            const nextLevelBtn = document.getElementById('nextLevelBtn');
+            if (currentLevel >= LEVELS.length) {
+                nextLevelBtn.style.display = 'none';
+                document.querySelector('#levelCompleteModal .modal-title').textContent = '🏆 恭喜通关所有关卡！';
+            } else {
+                nextLevelBtn.style.display = 'inline-block';
+                document.querySelector('#levelCompleteModal .modal-title').textContent = '🎉 恭喜过关！';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function showGameOver() {
+            const modal = document.getElementById('gameOverModal');
+            document.getElementById('gameOverScore').textContent = `得分: ${score}`;
+            modal.classList.add('show');
+        }
+
+        function hideModals() {
+            document.getElementById('levelCompleteModal').classList.remove('show');
+            document.getElementById('gameOverModal').classList.remove('show');
+        }
+
+        function nextLevel() {
+            if (currentLevel < LEVELS.length) {
+                currentLevel++;
+                hideModals();
+                resetLevel();
+            }
+        }
+
+        function resetLevel() {
+            score = 0;
+            moves = 0;
+            selectedCell = null;
+            isProcessing = false;
+            levelComplete = false;
+            hideModals();
+            initGame();
+            showMessage('点击选择水果，交换相邻水果消除！');
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            resetLevel();
+        }
+
+        function restartGame() {
+            currentLevel = 1;
+            resetLevel();
+        }
+
         function showMessage(msg) {
             document.getElementById('message').textContent = msg;
         }
@@ -447,22 +683,11 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        function resetGame() {
-            score = 0;
-            moves = 0;
-            selectedCell = null;
-            isProcessing = false;
-            initGame();
-            showMessage('点击选择水果，交换相邻水果消除！');
-        }
-
         function showHint() {
-            if (isProcessing) return;
+            if (isProcessing || levelComplete) return;
 
-            // 查找可能的移动
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
-                    // 尝试向右交换
                     if (j < BOARD_SIZE - 1) {
                         swapTemp(i, j, i, j + 1);
                         if (findMatches().length > 0) {
@@ -474,7 +699,6 @@
                         swapTemp(i, j, i, j + 1);
                     }
 
-                    // 尝试向下交换
                     if (i < BOARD_SIZE - 1) {
                         swapTemp(i, j, i + 1, j);
                         if (findMatches().length > 0) {
@@ -509,7 +733,6 @@
             }, 1500);
         }
 
-        // 初始化游戏
         initGame();
     </script>
 </body>
