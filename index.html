@@ -595,20 +595,34 @@
         // 初始化音频上下文
         function initAudio() {
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('AudioContext not supported');
+                    soundEnabled = false;
+                }
+            }
+            // 确保 AudioContext 是运行状态
+            if (audioContext && audioContext.state === 'suspended') {
+                try {
+                    audioContext.resume();
+                } catch (e) {
+                    console.log('Failed to resume AudioContext');
+                }
             }
         }
 
         // 播放音效
         function playSound(type) {
             if (!soundEnabled) return;
-            initAudio();
+            try {
+                initAudio();
 
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
 
             const now = audioContext.currentTime;
 
@@ -753,6 +767,10 @@
                     oscillator.start(now);
                     oscillator.stop(now + 0.1);
                     break;
+            }
+            } catch (e) {
+                // 忽略音效错误，不影响游戏运行
+                console.log('Sound error:', e);
             }
         }
 
