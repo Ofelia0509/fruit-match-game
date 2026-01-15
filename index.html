@@ -327,6 +327,28 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
         .message {
             margin-top: 15px;
             font-size: 1em;
@@ -477,6 +499,12 @@
             .modal-stars {
                 font-size: 2em;
             }
+
+            .sound-toggle {
+                width: 45px;
+                height: 45px;
+                font-size: 22px;
+            }
         }
 
         @media (max-width: 360px) {
@@ -496,6 +524,8 @@
     </style>
 </head>
 <body>
+    <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</div>
+
     <div class="game-container">
         <h1>🍎 水果消消乐 🍊</h1>
         <div class="level-info">
@@ -559,6 +589,178 @@
         let isProcessing = false;
         let levelComplete = false;
         let comboCount = 0;
+        let soundEnabled = true;
+        let audioContext = null;
+
+        // 初始化音频上下文
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // 播放音效
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            const now = audioContext.currentTime;
+
+            switch(type) {
+                case 'select':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(600, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.1);
+                    break;
+
+                case 'match':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(1100, now + 0.05);
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.2);
+                    break;
+
+                case 'combo':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, now);
+                    oscillator.frequency.setValueAtTime(1100, now + 0.05);
+                    oscillator.frequency.setValueAtTime(1320, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.25);
+                    break;
+
+                case 'super':
+                    for (let i = 0; i < 3; i++) {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(880 + i * 220, now + i * 0.05);
+                        gain.gain.setValueAtTime(0.3, now + i * 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.15);
+                        osc.start(now + i * 0.05);
+                        osc.stop(now + i * 0.05 + 0.15);
+                    }
+                    break;
+
+                case 'ultra':
+                    // 爆炸音效
+                    const bufferSize = audioContext.sampleRate * 0.5;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.1));
+                    }
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const noiseGain = audioContext.createGain();
+                    noise.connect(noiseGain);
+                    noiseGain.connect(audioContext.destination);
+                    noiseGain.gain.setValueAtTime(0.3, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    noise.start(now);
+                    noise.stop(now + 0.5);
+
+                    // 低音轰鸣
+                    const bass = audioContext.createOscillator();
+                    const bassGain = audioContext.createGain();
+                    bass.connect(bassGain);
+                    bassGain.connect(audioContext.destination);
+                    bass.type = 'sawtooth';
+                    bass.frequency.setValueAtTime(150, now);
+                    bass.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                    bassGain.gain.setValueAtTime(0.2, now);
+                    bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    bass.start(now);
+                    bass.stop(now + 0.3);
+                    break;
+
+                case 'swap':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(300, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(500, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.1);
+                    break;
+
+                case 'invalid':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.2);
+                    break;
+
+                case 'levelComplete':
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.15);
+                        gain.gain.setValueAtTime(0.3, now + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.2);
+                        osc.start(now + i * 0.15);
+                        osc.stop(now + i * 0.15 + 0.2);
+                    });
+                    break;
+
+                case 'gameOver':
+                    const sadNotes = [392, 349, 330];
+                    sadNotes.forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.3);
+                        gain.gain.setValueAtTime(0.3, now + i * 0.3);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.3 + 0.4);
+                        osc.start(now + i * 0.3);
+                        osc.stop(now + i * 0.3 + 0.4);
+                    });
+                    break;
+
+                case 'fall':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(400, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.1);
+                    break;
+            }
+        }
+
+        // 切换音效
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+        }
 
         function initGame() {
             board = [];
@@ -578,13 +780,11 @@
         }
 
         function wouldMatch(row, col, fruit) {
-            // 检查水平方向（检查3个及以上）
             if (col >= 2 &&
                 board[row][col-1] === fruit &&
                 board[row][col-2] === fruit) {
                 return true;
             }
-            // 检查垂直方向（检查3个及以上）
             if (row >= 2 &&
                 board[row-1][col] === fruit &&
                 board[row-2][col] === fruit) {
@@ -618,6 +818,7 @@
             if (selectedCell === null) {
                 selectedCell = { row, col };
                 cell.classList.add('selected');
+                playSound('select');
                 showMessage('选择相邻水果进行交换');
             } else {
                 const prevCell = getCell(selectedCell.row, selectedCell.col);
@@ -629,6 +830,7 @@
                 } else {
                     selectedCell = { row, col };
                     cell.classList.add('selected');
+                    playSound('select');
                     showMessage('选择相邻水果进行交换');
                 }
             }
@@ -649,6 +851,7 @@
             moves++;
             comboCount = 0;
             updateScore();
+            playSound('swap');
 
             const temp = board[row1][col1];
             board[row1][col1] = board[row2][col2];
@@ -662,6 +865,7 @@
                 checkGameStatus();
             } else {
                 showMessage('无效移动！');
+                playSound('invalid');
                 await sleep(500);
                 const temp = board[row1][col1];
                 board[row1][col1] = board[row2][col2];
@@ -677,21 +881,18 @@
         function findMatches() {
             const matches = new Set();
 
-            // 检查水平方向（支持4个及以上）
             for (let i = 0; i < BOARD_SIZE; i++) {
                 for (let j = 0; j < BOARD_SIZE; j++) {
                     const fruit = board[i][j];
                     if (!fruit) continue;
 
                     let matchCount = 1;
-                    // 向右查找连续相同的水果
                     let k = j + 1;
                     while (k < BOARD_SIZE && board[i][k] === fruit) {
                         matchCount++;
                         k++;
                     }
 
-                    // 如果有3个或更多，记录所有匹配的位置
                     if (matchCount >= 3) {
                         for (let m = 0; m < matchCount; m++) {
                             matches.add(`${i},${j+m}`);
@@ -700,21 +901,18 @@
                 }
             }
 
-            // 检查垂直方向（支持4个及以上）
             for (let j = 0; j < BOARD_SIZE; j++) {
                 for (let i = 0; i < BOARD_SIZE; i++) {
                     const fruit = board[i][j];
                     if (!fruit) continue;
 
                     let matchCount = 1;
-                    // 向下查找连续相同的水果
                     let k = i + 1;
                     while (k < BOARD_SIZE && board[k][j] === fruit) {
                         matchCount++;
                         k++;
                     }
 
-                    // 如果有3个或更多，记录所有匹配的位置
                     if (matchCount >= 3) {
                         for (let m = 0; m < matchCount; m++) {
                             matches.add(`${i+m},${j}`);
@@ -749,7 +947,6 @@
             while (matches.length > 0) {
                 comboCount++;
 
-                // 根据匹配数量分组，应用不同的动画
                 const matchGroups = groupMatches(matches);
 
                 for (const group of matchGroups) {
@@ -760,14 +957,12 @@
                         const cell = getCell(row, col);
                         if (cell) {
                             cell.classList.add(matchType);
-
-                            // 显示得分弹窗
                             showScorePopup(cell, multiplier * 10);
-
-                            // 计算分数
                             score += Math.floor(10 * multiplier);
                         }
                     });
+
+                    playSound(matchType);
 
                     const typeNames = {
                         'matched': '普通消除',
@@ -806,7 +1001,6 @@
         }
 
         function groupMatches(matches) {
-            // 按匹配的连续程度分组
             const groups = [];
             const processed = new Set();
 
@@ -817,7 +1011,6 @@
                 const group = [match];
                 processed.add(key);
 
-                // 检查水平方向
                 let j = match.col + 1;
                 while (j < BOARD_SIZE) {
                     const key2 = `${match.row},${j}`;
@@ -831,7 +1024,6 @@
                     }
                 }
 
-                // 检查垂直方向
                 let i = match.row + 1;
                 while (i < BOARD_SIZE) {
                     const key2 = `${i},${match.col}`;
@@ -886,6 +1078,7 @@
             }
 
             if (dropped) {
+                playSound('fall');
                 renderBoard();
                 document.querySelectorAll('.cell').forEach(cell => {
                     if (cell.textContent) {
@@ -956,9 +1149,11 @@
 
             if (score >= level.targetScore && !levelComplete) {
                 levelComplete = true;
+                playSound('levelComplete');
                 showLevelComplete();
             }
             else if (moves >= level.maxMoves && score < level.targetScore && !levelComplete) {
+                playSound('gameOver');
                 showGameOver();
             }
         }
