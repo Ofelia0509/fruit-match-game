@@ -2,13 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>水果消消乐</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -18,86 +19,90 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
         }
 
         .game-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 30px;
+            padding: 20px 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
+            max-width: 95vw;
+            width: 100%;
         }
 
         h1 {
             color: #667eea;
-            margin-bottom: 20px;
-            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-size: 1.8em;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .level-info {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-            padding: 8px 20px;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            padding: 6px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
             display: inline-block;
-            font-size: 1.1em;
+            font-size: 1em;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .level-stars {
-            font-size: 1.5em;
-            margin-top: 5px;
+            font-size: 1.2em;
+            margin-top: 3px;
         }
 
         .target-info {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 10px 25px;
-            border-radius: 25px;
-            margin-bottom: 15px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            margin-bottom: 10px;
             display: inline-block;
-            font-size: 1em;
+            font-size: 0.9em;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .score-board {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-            font-size: 1.2em;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 1em;
+            flex-wrap: wrap;
         }
 
         .score-item {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 10px 25px;
-            border-radius: 25px;
+            padding: 8px 20px;
+            border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 120px;
         }
 
         .game-board {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
-            gap: 5px;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 3px;
             justify-content: center;
-            margin: 20px auto;
+            margin: 15px auto;
             background: #f0f0f0;
-            padding: 15px;
+            padding: 10px;
             border-radius: 10px;
             box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
         }
 
         .cell {
-            width: 60px;
-            height: 60px;
-            border-radius: 10px;
+            aspect-ratio: 1;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 40px;
+            font-size: clamp(24px, 5vw, 40px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -105,6 +110,8 @@
             background: white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
 
         .cell:hover {
@@ -116,12 +123,23 @@
             transform: scale(1.1);
             box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
             animation: pulse 0.5s infinite alternate;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .cell.matched {
-            animation: pop 0.3s ease-out;
-            opacity: 0;
-            transform: scale(0);
+            animation: pop 0.4s ease-out forwards;
+        }
+
+        .cell.combo {
+            animation: combo 0.6s ease-out forwards;
+        }
+
+        .cell.super {
+            animation: super 0.8s ease-out forwards;
+        }
+
+        .cell.ultra {
+            animation: ultra 1s ease-out forwards;
         }
 
         @keyframes pulse {
@@ -138,19 +156,105 @@
                 transform: scale(1);
                 opacity: 1;
             }
-            50% {
-                transform: scale(1.3);
-                opacity: 0.5;
+            30% {
+                transform: scale(1.4) rotate(10deg);
+                opacity: 0.8;
             }
             100% {
-                transform: scale(0);
+                transform: scale(0) rotate(20deg);
                 opacity: 0;
+            }
+        }
+
+        @keyframes combo {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            20% {
+                transform: scale(1.5) rotate(-15deg);
+                opacity: 0.9;
+                filter: brightness(1.5);
+            }
+            50% {
+                transform: scale(1.8) rotate(15deg);
+                opacity: 0.6;
+                filter: brightness(2);
+            }
+            100% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+                filter: brightness(2.5);
+            }
+        }
+
+        @keyframes super {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            25% {
+                transform: scale(1.6) rotate(-20deg);
+                opacity: 0.9;
+                filter: brightness(2) hue-rotate(45deg);
+            }
+            50% {
+                transform: scale(2) rotate(20deg);
+                opacity: 0.7;
+                filter: brightness(2.5) hue-rotate(90deg);
+            }
+            75% {
+                transform: scale(1.5) rotate(-10deg);
+                opacity: 0.4;
+                filter: brightness(3) hue-rotate(135deg);
+            }
+            100% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+                filter: brightness(3.5) hue-rotate(180deg);
+            }
+        }
+
+        @keyframes ultra {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            20% {
+                transform: scale(1.8) rotate(-30deg);
+                opacity: 0.95;
+                filter: brightness(2.5) hue-rotate(60deg);
+                text-shadow: 0 0 20px #fff, 0 0 40px #f0f;
+            }
+            40% {
+                transform: scale(2.2) rotate(30deg);
+                opacity: 0.85;
+                filter: brightness(3) hue-rotate(120deg);
+                text-shadow: 0 0 30px #fff, 0 0 60px #f0f;
+            }
+            60% {
+                transform: scale(1.8) rotate(-20deg);
+                opacity: 0.7;
+                filter: brightness(3.5) hue-rotate(180deg);
+                text-shadow: 0 0 40px #fff, 0 0 80px #f0f;
+            }
+            80% {
+                transform: scale(1.2) rotate(10deg);
+                opacity: 0.4;
+                filter: brightness(4) hue-rotate(240deg);
+                text-shadow: 0 0 50px #fff, 0 0 100px #f0f;
+            }
+            100% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+                filter: brightness(5) hue-rotate(300deg);
+                text-shadow: 0 0 60px #fff, 0 0 120px #f0f;
             }
         }
 
         @keyframes fall {
             from {
-                transform: translateY(-60px);
+                transform: translateY(-100%);
                 opacity: 0;
             }
             to {
@@ -160,26 +264,54 @@
         }
 
         .cell.falling {
-            animation: fall 0.3s ease-out;
+            animation: fall 0.4s ease-out;
+        }
+
+        @keyframes scorePopup {
+            0% {
+                transform: scale(0) translateY(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) translateY(-20px);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) translateY(-40px);
+                opacity: 0;
+            }
+        }
+
+        .score-popup {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.5em;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            animation: scorePopup 0.8s ease-out forwards;
+            z-index: 100;
         }
 
         .buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1em;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 0.95em;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
         }
 
         button:hover {
@@ -196,10 +328,10 @@
         }
 
         .message {
-            margin-top: 20px;
-            font-size: 1.1em;
+            margin-top: 15px;
+            font-size: 1em;
             color: #667eea;
-            min-height: 30px;
+            min-height: 24px;
         }
 
         .level-complete-modal {
@@ -213,6 +345,7 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 20px;
         }
 
         .level-complete-modal.show {
@@ -221,11 +354,12 @@
 
         .modal-content {
             background: white;
-            padding: 40px;
+            padding: 30px 25px;
             border-radius: 20px;
             text-align: center;
             animation: modalPop 0.5s ease;
-            max-width: 400px;
+            max-width: 90vw;
+            width: 100%;
         }
 
         @keyframes modalPop {
@@ -243,26 +377,27 @@
         }
 
         .modal-title {
-            font-size: 2em;
+            font-size: 1.8em;
             color: #667eea;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .modal-stars {
-            font-size: 3em;
-            margin-bottom: 20px;
+            font-size: 2.5em;
+            margin-bottom: 15px;
         }
 
         .modal-score {
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .modal-buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .game-over-modal {
@@ -276,10 +411,87 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 20px;
         }
 
         .game-over-modal.show {
             display: flex;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 15px 10px;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 10px;
+            }
+
+            .level-info, .target-info {
+                padding: 5px 12px;
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+
+            .score-board {
+                gap: 8px;
+                font-size: 0.9em;
+            }
+
+            .score-item {
+                padding: 6px 12px;
+                border-radius: 15px;
+                min-width: 100px;
+            }
+
+            .game-board {
+                padding: 8px;
+                gap: 2px;
+            }
+
+            .cell {
+                font-size: clamp(20px, 6vw, 35px);
+                border-radius: 6px;
+            }
+
+            button {
+                padding: 8px 20px;
+                font-size: 0.9em;
+            }
+
+            .message {
+                font-size: 0.9em;
+                margin-top: 12px;
+            }
+
+            .modal-content {
+                padding: 25px 20px;
+            }
+
+            .modal-title {
+                font-size: 1.5em;
+            }
+
+            .modal-stars {
+                font-size: 2em;
+            }
+        }
+
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .score-board {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .game-board {
+                max-width: 320px;
+            }
         }
     </style>
 </head>
@@ -346,6 +558,7 @@
         let currentLevel = 1;
         let isProcessing = false;
         let levelComplete = false;
+        let comboCount = 0;
 
         function initGame() {
             board = [];
@@ -365,11 +578,13 @@
         }
 
         function wouldMatch(row, col, fruit) {
+            // 检查水平方向（检查3个及以上）
             if (col >= 2 &&
                 board[row][col-1] === fruit &&
                 board[row][col-2] === fruit) {
                 return true;
             }
+            // 检查垂直方向（检查3个及以上）
             if (row >= 2 &&
                 board[row-1][col] === fruit &&
                 board[row-2][col] === fruit) {
@@ -389,7 +604,7 @@
                     cell.textContent = board[i][j];
                     cell.dataset.row = i;
                     cell.dataset.col = j;
-                    cell.addEventListener('click', () => handleCellClick(i, j));
+                    cell.addEventListener('click', () => handleCellClick(i, j), { passive: true });
                     gameBoard.appendChild(cell);
                 }
             }
@@ -432,6 +647,7 @@
         async function swapCells(row1, col1, row2, col2) {
             isProcessing = true;
             moves++;
+            comboCount = 0;
             updateScore();
 
             const temp = board[row1][col1];
@@ -461,22 +677,48 @@
         function findMatches() {
             const matches = new Set();
 
+            // 检查水平方向（支持4个及以上）
             for (let i = 0; i < BOARD_SIZE; i++) {
-                for (let j = 0; j < BOARD_SIZE - 2; j++) {
-                    if (board[i][j] && board[i][j] === board[i][j+1] && board[i][j] === board[i][j+2]) {
-                        matches.add(`${i},${j}`);
-                        matches.add(`${i},${j+1}`);
-                        matches.add(`${i},${j+2}`);
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    const fruit = board[i][j];
+                    if (!fruit) continue;
+
+                    let matchCount = 1;
+                    // 向右查找连续相同的水果
+                    let k = j + 1;
+                    while (k < BOARD_SIZE && board[i][k] === fruit) {
+                        matchCount++;
+                        k++;
+                    }
+
+                    // 如果有3个或更多，记录所有匹配的位置
+                    if (matchCount >= 3) {
+                        for (let m = 0; m < matchCount; m++) {
+                            matches.add(`${i},${j+m}`);
+                        }
                     }
                 }
             }
 
-            for (let i = 0; i < BOARD_SIZE - 2; i++) {
-                for (let j = 0; j < BOARD_SIZE; j++) {
-                    if (board[i][j] && board[i][j] === board[i+1][j] && board[i][j] === board[i+2][j]) {
-                        matches.add(`${i},${j}`);
-                        matches.add(`${i+1},${j}`);
-                        matches.add(`${i+2},${j}`);
+            // 检查垂直方向（支持4个及以上）
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                for (let i = 0; i < BOARD_SIZE; i++) {
+                    const fruit = board[i][j];
+                    if (!fruit) continue;
+
+                    let matchCount = 1;
+                    // 向下查找连续相同的水果
+                    let k = i + 1;
+                    while (k < BOARD_SIZE && board[k][j] === fruit) {
+                        matchCount++;
+                        k++;
+                    }
+
+                    // 如果有3个或更多，记录所有匹配的位置
+                    if (matchCount >= 3) {
+                        for (let m = 0; m < matchCount; m++) {
+                            matches.add(`${i+m},${j}`);
+                        }
                     }
                 }
             }
@@ -487,19 +729,63 @@
             });
         }
 
+        function getMatchType(matchCount) {
+            if (matchCount >= 6) return 'ultra';
+            if (matchCount >= 5) return 'super';
+            if (matchCount >= 4) return 'combo';
+            return 'matched';
+        }
+
+        function getScoreMultiplier(matchCount) {
+            if (matchCount >= 6) return 3;
+            if (matchCount >= 5) return 2.5;
+            if (matchCount >= 4) return 2;
+            return 1;
+        }
+
         async function processMatches() {
             let matches = findMatches();
 
             while (matches.length > 0) {
-                matches.forEach(({ row, col }) => {
-                    const cell = getCell(row, col);
-                    cell.classList.add('matched');
-                    score += 10;
-                });
-                updateScore();
-                showMessage(`消除了 ${matches.length} 个水果！+${matches.length * 10} 分`);
+                comboCount++;
 
-                await sleep(300);
+                // 根据匹配数量分组，应用不同的动画
+                const matchGroups = groupMatches(matches);
+
+                for (const group of matchGroups) {
+                    const matchType = getMatchType(group.length);
+                    const multiplier = getScoreMultiplier(group.length);
+
+                    group.forEach(({ row, col }) => {
+                        const cell = getCell(row, col);
+                        if (cell) {
+                            cell.classList.add(matchType);
+
+                            // 显示得分弹窗
+                            showScorePopup(cell, multiplier * 10);
+
+                            // 计算分数
+                            score += Math.floor(10 * multiplier);
+                        }
+                    });
+
+                    const typeNames = {
+                        'matched': '普通消除',
+                        'combo': '连击！',
+                        'super': '超级消除！',
+                        'ultra': '终极爆炸！'
+                    };
+
+                    if (matchCount > 1) {
+                        showMessage(`第${comboCount}连消！${typeNames[matchType]} +${group.length * Math.floor(10 * multiplier)} 分`);
+                    } else {
+                        showMessage(`${typeNames[matchType]} +${group.length * Math.floor(10 * multiplier)} 分`);
+                    }
+                }
+
+                updateScore();
+
+                await sleep(400);
 
                 matches.forEach(({ row, col }) => {
                     board[row][col] = '';
@@ -511,11 +797,74 @@
                 matches = findMatches();
 
                 if (matches.length > 0) {
-                    await sleep(200);
+                    await sleep(300);
                 }
             }
 
+            comboCount = 0;
             showMessage('继续消除！');
+        }
+
+        function groupMatches(matches) {
+            // 按匹配的连续程度分组
+            const groups = [];
+            const processed = new Set();
+
+            for (const match of matches) {
+                const key = `${match.row},${match.col}`;
+                if (processed.has(key)) continue;
+
+                const group = [match];
+                processed.add(key);
+
+                // 检查水平方向
+                let j = match.col + 1;
+                while (j < BOARD_SIZE) {
+                    const key2 = `${match.row},${j}`;
+                    const nextMatch = matches.find(m => m.row === match.row && m.col === j);
+                    if (nextMatch && !processed.has(key2)) {
+                        group.push(nextMatch);
+                        processed.add(key2);
+                        j++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // 检查垂直方向
+                let i = match.row + 1;
+                while (i < BOARD_SIZE) {
+                    const key2 = `${i},${match.col}`;
+                    const nextMatch = matches.find(m => m.row === i && m.col === match.col);
+                    if (nextMatch && !processed.has(key2)) {
+                        group.push(nextMatch);
+                        processed.add(key2);
+                        i++;
+                    } else {
+                        break;
+                    }
+                }
+
+                groups.push(group);
+            }
+
+            return groups;
+        }
+
+        function showScorePopup(cell, points) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = `+${points}`;
+
+            const rect = cell.getBoundingClientRect();
+            popup.style.left = rect.left + rect.width / 2 + 'px';
+            popup.style.top = rect.top + 'px';
+
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 800);
         }
 
         async function dropFruits() {
@@ -543,7 +892,7 @@
                         cell.classList.add('falling');
                     }
                 });
-                await sleep(300);
+                await sleep(400);
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('falling');
                 });
@@ -567,7 +916,7 @@
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.add('falling');
                 });
-                await sleep(300);
+                await sleep(400);
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('falling');
                 });
@@ -586,7 +935,6 @@
             document.getElementById('targetScore').textContent = level.targetScore;
             document.getElementById('maxMoves').textContent = level.maxMoves;
 
-            // 计算星级
             const stars = calculateStars();
             document.getElementById('levelStars').textContent = stars;
         }
@@ -606,12 +954,10 @@
         function checkGameStatus() {
             const level = LEVELS[currentLevel - 1];
 
-            // 检查是否达到目标分数
             if (score >= level.targetScore && !levelComplete) {
                 levelComplete = true;
                 showLevelComplete();
             }
-            // 检查是否移动次数用完
             else if (moves >= level.maxMoves && score < level.targetScore && !levelComplete) {
                 showGameOver();
             }
@@ -622,7 +968,6 @@
             document.getElementById('modalStars').textContent = calculateStars();
             document.getElementById('modalScore').textContent = `得分: ${score}`;
 
-            // 如果是最后一关，隐藏下一关按钮
             const nextLevelBtn = document.getElementById('nextLevelBtn');
             if (currentLevel >= LEVELS.length) {
                 nextLevelBtn.style.display = 'none';
@@ -660,6 +1005,7 @@
             selectedCell = null;
             isProcessing = false;
             levelComplete = false;
+            comboCount = 0;
             hideModals();
             initGame();
             showMessage('点击选择水果，交换相邻水果消除！');
